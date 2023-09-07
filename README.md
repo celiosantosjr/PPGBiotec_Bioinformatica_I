@@ -1,6 +1,20 @@
-# Bioinformatic class -- Biotechnology postgraduation
+# Bioinformatics 101 -- PPGBiotec
 
-This repository contains the scripts for the discipline of Bioinformatics applied in the postgrad course in Biotechnology.
+*Summary:*
+
+*This repository contains the scripts for the discipline of Bioinformatics applied in the postgrad course in Biotechnology.*
+
+---
+
+Author: Célio Dias Santos Jr.
+
+Email: celio.diasjunior@gmail.com
+
+Date: 7th September 2023
+
+Location: São Carlos, SP/Brazil
+
+---
 
 ## Script: 2nd_class_script.py
 
