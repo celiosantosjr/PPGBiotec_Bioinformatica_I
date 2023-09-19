@@ -265,8 +265,10 @@ def profile(seq, scale, output=False, window=5):
         return ws, threshold
     
  
-def antigenicity(seq, window_size=8, threshold=1.1, verbose=True):
-    antigenic_segments = []  
+def antigenicity(seq, window_size=8, verbose=True):
+    antigenic_segments = [] 
+    threshold = sum(kolaskar.get(x) for x in seq)/len(seq) 
+    if threshold > 1.05: threshold = 1.05
     for i in range(len(seq) - window_size + 1):
         window = seq[i:i + window_size]
         antigenic_score = 0.0
@@ -471,7 +473,7 @@ def main(seq):
         print(f'Calculating profile for the scale {scale_name}')    
         profile(seq, scale, output=f'profile_{scale_name}.tsv', window=5)
     print('\n')
-    antigenicity(seq, 8, 1.1, True)
+    antigenicity(seq, 8, True)
     print('\n')
     hydrophobicity(seq, scale='KD', verbose=True)
     print('\n')
