@@ -265,26 +265,30 @@ def profile(seq, scale, output=False, window=5):
         return ws, threshold
     
  
-def antigenicity(seq, verbose=True):
-    # method of Kolaskar
-     ws, threshold = profile(seq, kolaskar, False, 7)
-     ws = [x[1] for x in ws]
-     if threshold > 1:
-         nw = [True if x > 1 else False for x in ws]
-     else:
-         nw = [True if x > threshold else False for x in ws]
-     results = []
-     for idx in range(0, len(nw)-7+1):
-         if len(results) > 0:
-             if idx < results[-1][1]:
-                 continue
-         else:
-             pass             
-         n = 8
-         while sum(nw[idx: idx+n]) == n: n += 1
-         n -= 1    
-         results.append((idx, idx+n, seq[idx: idx+n], sum(ws[idx: idx+n])/n))
-     return results
+def antigenicity(seq, window_size=8, threshold=1.1, verbose=True):
+    antigenic_segments = []  
+    for i in range(len(seq) - window_size + 1):
+        window = seq[i:i + window_size]
+        antigenic_score = 0.0
+        # Calculate antigenic propensity score for the window
+        for j in range(window_size):
+            amino_acid = window[j]
+            if amino_acid in kolaskar:
+                antigenic_score += kolaskar[amino_acid]
+        antigenic_score /= window_size
+        if antigenic_score >= threshold:
+            start = i
+            end = i + window_size - 1
+            fragment = seq[start:end+1]
+            antigenic_segments.append((start+1, end+1, fragment, antigenic_score))
+    if verbose:
+         print(f'Antigenicity by Kolaskar')
+         print(f'Threshold: {threshold}, Window_size: {window_size}')
+         print('START\tSTOP\tFRAGMENT\tANTIGENIC SCORE')
+         for a, b, c, d in antigenic_segments:
+             print(f'{a}\t{b}\t{c}\t{d:.2f}')
+    else:
+         return antigenic_segments
 
 
 def hydrophobicity(seq, scale='KD', verbose=True):
@@ -400,11 +404,11 @@ def motif_finder(motif, seq, output=False, verbose=True):
         with open(output, 'w') as ofile:
             ofile.write('START\tSTOP\tMATCH\n')
             for sta, sto, mat in test:
-                ofile.write(f'{sta}\t{stop}\t{mat}\n')
+                ofile.write(f'{sta}\t{sto}\t{mat}\n')
     if verbose:
         print(f'START\tSTOP\tMATCH')
         for sta, sto, mat in test:
-            print(f'{sta}\t{stop}\t{mat}')
+            print(f'{sta}\t{sto}\t{mat}')
     else:
         return test
 
@@ -453,6 +457,7 @@ def main(seq):
     pI(seq, verbose=True)
     print('\n')
     mol_extinc(seq, verbose=True)
+    print('\n')
     for scale_name, scale in [('flexibility_bfactors', bfactors),
                               ('antigenicity_parker', parker),
                               ('antigenicity_kolaskar', kolaskar),
@@ -466,7 +471,7 @@ def main(seq):
         print(f'Calculating profile for the scale {scale_name}')    
         profile(seq, scale, output=f'profile_{scale_name}.tsv', window=5)
     print('\n')
-    antigenicity(seq, verbose=True)
+    antigenicity(seq, 8, 1.1, True)
     print('\n')
     hydrophobicity(seq, scale='KD', verbose=True)
     print('\n')
@@ -485,6 +490,8 @@ def main(seq):
     boman_index(seq, verbose=True)
     print('\n')
     hmoment(seq, angle=100, window=11, verbose=True)
+    print('\nSearching for patterns, in this case V[AKL]')
+    motif_finder(r'V[AKL]', seq, output=False, verbose=True)
 
 
 if __name__ == '__main__':
