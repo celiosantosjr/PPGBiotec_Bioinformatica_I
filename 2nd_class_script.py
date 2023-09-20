@@ -26,7 +26,7 @@ aa_mw = {'A': 71.08, 'C': 103.14, 'D': 115.09, 'E': 129.12,
 
 # pKa for different residues EMBOSS scale
 pka = {'NT': 8.6, 'CT': 3.6, 'C': 8.5, 'D': 3.9,
-       'E': 4.1, 'H': 6.5, 'K': 10.8, 'R': 12.5,
+       'E': 4.3, 'H': 6.0, 'K': 10.5, 'R': 12.5,
        'Y': 10.1}
 
 # flexibility
@@ -203,28 +203,41 @@ def mw(seq, verbose=True):
     else:
         return total
 
-def prot_charge(seq, pH=7.0, verbose=True):
-    def form(pKa, pH, ch='+'):
-        if ch == '+': return 1/1+(10**(pH - pKa))
-        else: return -1/1+(10**(pKa - pH)) 
-    
+
+def prot_charge(seq, ph=7.0, verbose=True):
     seq = seq.upper()
-    neg = ['D', 'E']
-    pos = ['C', 'H', 'R', 'K', 'Y']
-    charge = sum(form(pka.get(x, 0), pH, '+') for x in seq if x in pos)
-    charge += sum(form(pka.get(x, 0), pH, '-') for x in seq if x in neg)
-    charge += form(pka.get('NT', 0), pH, '+')
-    charge += form(pka.get('CT', 0), pH, '-')
+    ph10 = 10**ph
+    net_charge = 0.0
+    neg = ['D', 'E', 'CT']
+    pos = ['C', 'H', 'R', 'K', 'Y', 'NT']
+    
+    for aa, pK10 in pka.items():
+        if aa in pos:
+            if aa != 'NT':
+                c = seq.count(aa)
+            else: c = 1
+            if c:
+                c_r = (10**pK10) / ph10
+                partial_charge = c_r / (c_r + 1.0)
+                net_charge += c * partial_charge
+        elif aa in neg:
+            if aa != 'CT':
+                c = seq.count(aa)
+            else: c = 1
+            if c:
+                c_r = ph10 / (10**pK10)
+                partial_charge = c_r / (c_r + 1.0)
+                net_charge -= c * partial_charge
     if verbose:
-        print(f'at pH = {pH}, charge = {charge:.2f}')
+        print(f'at pH = {ph}, charge = {net_charge:.2f}')
     else:
-        return charge
+        return net_charge
 
 
 def pI(seq, verbose=True):
     seq = seq.upper()
     pHs = [x/100 for x in range(0, 1401)]
-    chs = [prot_charge(seq, x, False) for x in pHs]
+    chs = [abs(prot_charge(seq, x, False)) for x in pHs]
     isolectric = pHs[chs.index(min(chs))]
     if verbose:
         print(f'pI = {isolectric:.2f}')
@@ -454,7 +467,7 @@ def main(seq):
     print('\n')
     mw(seq, verbose=True)
     print('\n')
-    prot_charge(seq, pH=7.0, verbose=True)
+    prot_charge(seq, ph=7.0, verbose=True)
     print('\n')
     pI(seq, verbose=True)
     print('\n')
@@ -499,4 +512,3 @@ def main(seq):
 if __name__ == '__main__':
     seq = 'VLSEGEWQLVLHVWAKVEADVAGHGQDILIRLFKSHPETLEKFDRFKHLKTEAEMKASEDLKKHGVTVLTALGAILKKKGHHEAELKPLAQSHATKHKIPIKYLEFISEAIIHVLHSRHPGNFGADAGGAMNKALELFRKDIAAKYKELGYQG'
     main(seq)
-        
