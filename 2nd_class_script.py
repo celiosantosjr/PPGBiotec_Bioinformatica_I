@@ -229,18 +229,18 @@ def prot_charge(seq, ph=7.0, verbose=True):
                 partial_charge = c_r / (c_r + 1.0)
                 net_charge -= c * partial_charge
     if verbose:
-        print(f'at pH = {ph}, charge = {net_charge:.2f}')
+        print(f'at pH = {ph}, charge = {net_charge:.3f}')
     else:
         return net_charge
 
 
 def pI(seq, verbose=True):
     seq = seq.upper()
-    pHs = [x/100 for x in range(0, 1401)]
+    pHs = [x/1000 for x in range(4000, 12001)]
     chs = [abs(prot_charge(seq, x, False)) for x in pHs]
     isolectric = pHs[chs.index(min(chs))]
     if verbose:
-        print(f'pI = {isolectric:.2f}')
+        print(f'pI = {isolectric:.3f}')
     else:
         return isolectric
 
@@ -258,6 +258,25 @@ def mol_extinc(seq, verbose=True):
         print(f'Considering cystines, E = {e1:.2f} L/mol.cm')
     else:
         return (e1, e2)
+
+
+def getgraphs(res, scale, show=False):
+    import pandas as pd
+    import seaborn as sns
+    import matplotlib.pyplot as plt
+    df = pd.DataFrame(res[0], columns=['residue', 'hydrophobicity'])
+    sns.lineplot(data=df, x='residue', y='hydrophobicity', label=scale, color='blue')
+    plt.axhline(res[1], label='Threshold', color='red')
+    plt.xlabel('Residue')
+    plt.ylabel(scale)
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(f'profile_{scale}.png', dpi=600)
+    if show:
+        plt.show()
+    else:
+        plt.close()
+
 
 
 def profile(seq, scale, output=False, window=5):
@@ -345,7 +364,7 @@ def radius(seq, verbose=True):
     if verbose:
         print(f'Gyration radius = {dg:.2f}°, Radius = {d:.2f}°')
     else:
-        return (g, dg)
+        return (d, dg)
         
 
 def sp_vol(seq, verbose=True):
@@ -463,6 +482,9 @@ def hmoment(seq, angle = 100, window = 11, verbose = True):
 
 
 def main(seq):
+    profile_graphs = True
+    profile_numbers = False
+    profile_tables = False
     calc_aafreq(seq)
     print('\n')
     mw(seq, verbose=True)
@@ -484,7 +506,15 @@ def main(seq):
                               ('hydrophobicity_janin', janin),
                               ('hydrophobicity_engelman', engelman)]:
         print(f'Calculating profile for the scale {scale_name}')    
-        profile(seq, scale, output=f'profile_{scale_name}.tsv', window=5)
+        if profile_graphs:
+            res = profile(seq, scale, output=False, window=5)
+            getgraphs(res, scale_name, show=False)        
+        if profile_numbers:
+            ws, threshold = profile(seq, scale, output=False, window=5)
+            print(f"Threshold: {str(threshold).replace('.', ',')}\nResidue\t{scale_name}")
+            for x, y in ws: print(f"{x}\t{str(y).replace('.', ',')}")
+        if profile_tables:
+            profile(seq, scale, output=f'profile_{scale_name}.tsv', window=5)
     print('\n')
     antigenicity(seq, 8, True)
     print('\n')
@@ -512,3 +542,4 @@ def main(seq):
 if __name__ == '__main__':
     seq = 'VLSEGEWQLVLHVWAKVEADVAGHGQDILIRLFKSHPETLEKFDRFKHLKTEAEMKASEDLKKHGVTVLTALGAILKKKGHHEAELKPLAQSHATKHKIPIKYLEFISEAIIHVLHSRHPGNFGADAGGAMNKALELFRKDIAAKYKELGYQG'
     main(seq)
+        
