@@ -30,7 +30,7 @@ dedicated packages in python, such as Seaborn and Matplotlib.
 To install numpy, you only need to:
 
 ```
-$ pip install numpy
+$ pip install numpy seaborn matplotlib pandas
 ```
 
 To run it locally, you will only need:
@@ -92,3 +92,21 @@ You can adopt several scales for the calculations, previously available in the s
 | hydrophobicity | rose |
 | hydrophobicity | janin |
 | hydrophobicity | engelman |
+
+When calculating profiles, you can modify the three variables in the lines 485-487 in the main function:
+
+```
+profile_graphs = True
+profile_numbers = False
+profile_tables = False
+```
+
+These lines will if the first is set to `True` generate graphs using seaborn in the local it is executed,
+if the second is set to `True`, it will generate tables printed on the screen, and if the 3rd is set to 
+`True` you can save the results as a `.tsv` file.
+
+In all cases you can get the same results for a profile using a given scale.
+
+
+
+
